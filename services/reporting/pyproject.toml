@@ -1,0 +1,32 @@
+[project]
+name = "kman-reporting"
+version = "0.1.0"
+description = "KMan Reporting: scheduled + on-demand reports delivered to the WhatsApp workspace."
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.110",
+  "uvicorn[standard]>=0.27",
+  "pydantic>=2.5",
+  "pydantic-settings>=2.1",
+  "sqlalchemy[asyncio]>=2.0",
+  "asyncpg>=0.29",
+  "redis>=5.0",
+  "httpx>=0.26",
+  "jinja2>=3.1",
+  "apscheduler>=3.10",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "pytest-asyncio>=0.23"]
+
+[project.scripts]
+dev = "uvicorn app.main:app --host 0.0.0.0 --port 8004 --reload"
+serve = "uvicorn app.main:app --host 0.0.0.0 --port 8004"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*"]

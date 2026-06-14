@@ -1,3 +1,77 @@
+# Application
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+*.pem
+secrets/
+*.key
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+*.log
+logs/
+worker.log
+
+# Test coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+.cache
+
+# Docker volumes & runtime
+data/
+*.db
+*.sqlite3
+postgres_data/
+redis_data/
+
+# OS
+Thumbs.db
+
+# Build artifacts
+.mypy_cache/
+.ruff_cache/
+.pyre/
+.pytype/
 
 # Worker-internal files — NEVER push to GitHub
 PROPOSAL.md
@@ -6,3 +80,6 @@ SPEC.txt
 TASK.txt
 pid
 role
+
+# Build planning artifacts
+.planning/

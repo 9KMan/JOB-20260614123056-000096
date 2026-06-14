@@ -1,0 +1,113 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: kman
+      POSTGRES_PASSWORD: kman
+      POSTGRES_DB: kman
+    ports: ["5432:5432"]
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kman -d kman"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  automation_engine:
+    build:
+      context: .
+      dockerfile: services/automation_engine/Dockerfile
+    environment:
+      DATABASE_URL: postgresql+asyncpg://kman:kman@postgres:5432/kman
+      REDIS_URL: redis://redis:6379/0
+      KMAN_AI_URL: http://ai_judgment:8002
+      LOG_LEVEL: INFO
+    ports: ["8001:8001"]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      ai_judgment: { condition: service_started }
+
+  ai_judgment:
+    build:
+      context: .
+      dockerfile: services/ai_judgment/Dockerfile
+    environment:
+      DATABASE_URL: postgresql+asyncpg://kman:kman@postgres:5432/kman
+      REDIS_URL: redis://redis:6379/0
+      KMAN_AI_PROVIDER: ${KMAN_AI_PROVIDER:-openai}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      LOG_LEVEL: INFO
+    ports: ["8002:8002"]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+
+  data_pipeline:
+    build:
+      context: .
+      dockerfile: services/data_pipeline/Dockerfile
+    environment:
+      DATABASE_URL: postgresql+asyncpg://kman:kman@postgres:5432/kman
+      REDIS_URL: redis://redis:6379/0
+      KMAN_ECOM_PLATFORM: ${KMAN_ECOM_PLATFORM:-mock}
+      LOG_LEVEL: INFO
+    ports: ["8003:8003"]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+
+  reporting:
+    build:
+      context: .
+      dockerfile: services/reporting/Dockerfile
+    environment:
+      DATABASE_URL: postgresql+asyncpg://kman:kman@postgres:5432/kman
+      REDIS_URL: redis://redis:6379/0
+      KMAN_WHATSAPP_URL: http://whatsapp_adapter:8005
+      KMAN_REPORT_OUTPUT_DIR: /var/kman/reports
+      LOG_LEVEL: INFO
+    ports: ["8004:8004"]
+    volumes:
+      - reports_data:/var/kman/reports
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      whatsapp_adapter: { condition: service_started }
+
+  whatsapp_adapter:
+    build:
+      context: .
+      dockerfile: services/whatsapp_adapter/Dockerfile
+    environment:
+      DATABASE_URL: postgresql+asyncpg://kman:kman@postgres:5432/kman
+      REDIS_URL: redis://redis:6379/0
+      KMAN_WORKSPACE_WEBHOOK_URL: ${KMAN_WORKSPACE_WEBHOOK_URL:-http://whatsapp-workspace:8000}
+      KMAN_WORKSPACE_WEBHOOK_SECRET: ${KMAN_WORKSPACE_WEBHOOK_SECRET:-}
+      KMAN_WHATSAPP_RATE_CAPACITY: "5"
+      KMAN_WHATSAPP_RATE_REFILL: "0.5"
+      LOG_LEVEL: INFO
+    ports: ["8005:8005"]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+
+volumes:
+  postgres_data:
+  redis_data:
+  reports_data:
